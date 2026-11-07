@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Calculadora de Resina</title>
+    <style>
+        :root { --primary: #2563eb; --bg: #f8fafc; --card-bg: #ffffff; --text: #1e293b; --border: #e2e8f0; --res-bg: #f0fdf4; --res-border: #bbf7d0; --res-text: #166534; --muted: #64748b; }
+        [data-theme="dark"] { --bg: #0f172a; --card-bg: #1e293b; --text: #f1f5f9; --border: #334155; --primary: #3b82f6; --res-bg: #064e3b; --res-border: #047857; --res-text: #a7f3d0; --muted: #94a3b8; }
+        body { font-family: sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 20px; transition: 0.2s; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .theme-btn { background: var(--primary); color: #fff; border: none; padding: 8px 16px; border-radius: 20px; cursor: pointer; font-weight: bold; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        @media(max-width:650px){ .grid { grid-template-columns: 1fr; } }
+        .card { background: var(--card-bg); padding: 20px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        .title { font-size: 1.1rem; font-weight: bold; margin: 0 0 15px 0; color: var(--primary); border-bottom: 2px solid var(--border); padding-bottom: 8px; }
+        .group { margin-bottom: 15px; }
+        .inline { display: flex; gap: 10px; }
+        .inline input { flex: 1; }
+        .inline select { width: 80px; }
+        label { display: block; font-size: 0.85rem; font-weight: bold; margin-bottom: 6px; }
+        input, select { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--card-bg); color: var(--text); box-sizing: border-box; }
+        .res-box { background: var(--res-bg); border: 1px solid var(--res-border); color: var(--res-text); }
+        .item { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px dashed var(--res-border); }
+        .item:last-child { border-bottom: none; }
+        .val { font-weight: bold; }
+        .alert { font-size: 0.8rem; color: var(--muted); margin-top: 8px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1 style="margin:0; color:var(--primary); font-size:1.8rem;">Calculadora de Resina</h1>
+        <button class="theme-btn" id="tTheme">Modo Noturno</button>
+    </div>
+    <div class="grid">
+        <div>
+            <div class="card">
+                <div class="title">1. Dados do Fabricante</div>
+                <div class="group"><label>Para cada quanta resina? (g)</label><input type="number" id="fRes" value="100"></div>
+                <div class="group"><label>Gotas de Catalisador:</label><input type="number" id="fGot" value="32"></div>
+                <div class="group"><label>Porcentagem de Cura (%):</label><input type="number" id="fPor" value="1.5" step="0.1"></div>
+                <div class="group"><label>Retração Esperada (%):</label><input type="number" id="fRet" value="0.5" step="0.1"></div>
+            </div>
+            <div class="card">
+                <div class="title">2. Sua Mistura Atual</div>
+                <div class="group">
+                    <label>Quantidade de Resina:</label>
+                    <div class="inline"><input type="number" id="qRes" value="2.5" step="any"><select id="uRes"><option value="g">g</option><option value="kg">kg</option></select></div>
+                </div>
+                <div class="group"><label>Temperatura do Local (°C):</label><input type="number" id="tAmb" value="25"></div>
+            </div>
+        </div>
+        <div>
+            <div class="card res-box">
+                <div class="title" style="color:var(--res-text); border-bottom-color:var(--res-border);">3. Resultados</div>
+                <div class="item"><span>Catalisador:</span><span class="val" id="rGot">0 gotas</span></div>
+                <div class="item"><span>Peso do Catalisador:</span><span class="val" id="rPGo">0.00g</span></div>
+                <div class="item"><span>Cura Aplicada:</span><span class="val" id="rPor">0.0%</span></div>
+                <div class="item"><span>Retração Estimada:</span><span class="val" id="rRet">0.00g</span></div>
+                <div class="item" style="flex-direction:column;">
+                    <div style="display:flex; justify-content:space-between; width:100%;"><span>Calor Superficial:</span><span class="val" id="rCal">Normal</span></div>
+                    <div class="alert" id="rDic">Calculando...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    var btn = document.getElementById('tTheme');
+    btn.addEventListener('click', function() {
+        if (document.documentElement.getAttribute('data-theme') === 'dark') {
+            document.documentElement.removeAttribute('data-theme'); btn.innerText = 'Modo Noturno';
+        } else {
+            document.documentElement.setAttribute('data-theme', 'dark'); btn.innerText = 'Modo Claro';
+        }
+    });
+    function calcular() {
+        var fRes = parseFloat(document.getElementById('fRes').value)||0, fGot = parseFloat(document.getElementById('fGot').value)||0;
+        var fPor = parseFloat(document.getElementById('fPor').value)||0, fRet = parseFloat(document.getElementById('fRet').value)||0;
+        var qRes = parseFloat(document.getElementById('qRes').value)||0, uRes = document.getElementById('uRes').value;
+        var tAmb = parseFloat(document.getElementById('tAmb').value)||0;
+        var pesoG = (uRes === 'kg') ? (qRes * 1000) : qRes;
+        var totalGotas = fRes > 0 ? (pesoG * fGot) / fRes : 0;
+        document.getElementById('rGot').innerText = Math.round(totalGotas) + " gotas";
+        var pesoGTotal = totalGotas * 0.025;
+        document.getElementById('rPGo').innerText = pesoGTotal.toFixed(3) + " g";
+        document.getElementById('rPor').innerText = fPor.toFixed(2) + "%";
+        document.getElementById('rRet').innerText = ((pesoG * fRet) / 100).toFixed(2) + " g";
+        var niv = "Normal", dic = "✅ Temperatura ideal e quantidade controlada. Cura uniforme.";
+        if (tAmb > 30) {
+            niv = "Alto / Rápido"; dic = "⚠️ Local muito quente! A cura será acelerada e o calor será maior.";
+            if (pesoG > 500) { niv = "CRÍTICO (Exotérmica)"; dic = "🔥 Perigo! Muito volume em local quente. Risco de ferver ou trincar."; }
+        } else if (tAmb < 18) {
+            niv = "Muito Baixo"; dic = "❄️ Ambiente frio. A cura vai demorar muito mais para concluir.";
+        } else if (pesoG > 1000) {
+            niv = "Médio (Massa)"; dic = "⚡ Calor perceptível ao toque devido ao grande volume acumulado.";
+        }
+        document.getElementById('rCal').innerText = niv; document.getElementById('rDic').innerText = dic;
+    }
+    ['fRes', 'fGot', 'fPor', 'fRet', 'qRes', 'uRes', 'tAmb'].forEach(function(id) {
+        var el = document.getElementById(id); el.addEventListener('input', calcular); el.addEventListener('change', calcular);
+    });
+    calcular();
+</script>
+</body>
+</html>
